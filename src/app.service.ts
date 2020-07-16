@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  AppStart(): string {
+    return "Start page\nTo start execute go to <notebook/records/>!";
   }
 }
