@@ -1,7 +1,7 @@
 import {
   BadRequestException, Body, Controller, Delete,
   Get, NotFoundException, Param,
-  Post, Put,
+  Post, Put, Query,
 } from '@nestjs/common';
 import { NotebookEntity } from '../entities/notebook.entity';
 import { NotebookService } from '../services/Notebook.service';
@@ -13,8 +13,8 @@ export class NotebookController {
 
   // Get all records
   @Get()
-  getAllRecords(): Promise<NotebookEntity[]> {
-    return this.notebookService.findAll();
+  async getAllRecords(@Query() sort: object): Promise<NotebookEntity[]> {
+    return await this.notebookService.findAll(sort as any)
   }
 
   //Get one record by id
@@ -25,7 +25,7 @@ export class NotebookController {
       console.log("404 - Not Found!\n")
       throw new NotFoundException("Record with ID(" + id + ") not found!\n");
     }
-    return this.notebookService.findOne(id);
+    return record;
   }
 
   //Update record by id
@@ -46,7 +46,7 @@ export class NotebookController {
     record.phoneNumber = phoneNumber;
     record.description = description;
     console.log("Updated\n");
-    return this.notebookService.update(record);
+    return await this.notebookService.update(record);
   }
 
   //Create new record
@@ -68,8 +68,10 @@ export class NotebookController {
   deleteRecord(@Param('id') id: number): Promise<void> {
     if (this.notebookService.findOne(id) != undefined)
     {
+      console.log(id);
       return this.notebookService.remove(id);
     }
     throw new NotFoundException("Records with ID(" + id + ") not found!\n");
   }
+
 }

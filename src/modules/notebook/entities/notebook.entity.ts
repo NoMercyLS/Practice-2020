@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Type } from 'class-transformer';
 
 @Entity()
 export class NotebookEntity {
@@ -17,6 +18,6 @@ export class NotebookEntity {
   @Column({ type: 'text'})
   description: string;
 
-  @Column({ type: 'varchar', length: 50 })
-  date: string;
+  @Column('date')
+  date: Date;
 }
