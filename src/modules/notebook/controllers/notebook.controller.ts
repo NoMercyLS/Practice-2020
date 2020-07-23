@@ -4,22 +4,26 @@ import {
   Post, Put, Query,
 } from '@nestjs/common';
 import { NotebookEntity } from '../entities/notebook.entity';
-import { NotebookService } from '../services/Notebook.service';
+import { NotebookService } from '../services/notebook.service';
+import { DateUtils } from 'typeorm/util/DateUtils';
+import { CreateNotebookDto, UpdateNotebookDto } from '../dto/notebook.dto';
 
-@Controller('notebook/records')
+type TSortParams = { [n in keyof Pick<NotebookEntity, 'date' | 'id'>]: 'ASC' | 'DESC' }
+
+@Controller('records')
 export class NotebookController {
 
   constructor(private readonly notebookService: NotebookService) {}
 
   // Get all records
   @Get()
-  async getAllRecords(@Query() sort: object): Promise<NotebookEntity[]> {
+  async getAllRecords(@Query() sort: TSortParams): Promise<CreateNotebookDto[]> {
     return await this.notebookService.findAll(sort as any)
   }
 
   //Get one record by id
   @Get(':id')
-  async getOneRecord(@Param('id') id: number): Promise<NotebookEntity> {
+  async getOneRecord(@Param('id') id: number): Promise<CreateNotebookDto> {
     const record = await this.notebookService.findOne(id);
     if (record == undefined) {
       console.log("404 - Not Found!\n")
@@ -32,7 +36,7 @@ export class NotebookController {
   @Put(':id')
   async updateRecords(
     @Param('id') id: number,
-    @Body() { firstName, lastName, phoneNumber, description, date }: NotebookEntity
+    @Body() { firstName, lastName, phoneNumber, description, date }: UpdateNotebookDto
   ) : Promise<NotebookEntity> {
     const record = await this.notebookService.findOne(id);
     if (record == undefined)
@@ -51,7 +55,7 @@ export class NotebookController {
 
   //Create new record
   @Post()
-  saveRecord(@Body() record: NotebookEntity): Promise<NotebookEntity> {
+  async saveRecord(@Body() record: CreateNotebookDto): Promise<UpdateNotebookDto> {
     if (record.date == undefined || record.description == undefined ||
       record.phoneNumber == undefined || record.lastName == undefined ||
       record.firstName == undefined) {
@@ -59,19 +63,25 @@ export class NotebookController {
       console.log(record);
       throw new BadRequestException("One or more fields are undefined\n");
     }
-    console.log("Added\n");
-    return this.notebookService.create(record);
+    record.date = DateUtils.mixedDateToDate(record.date)
+    try {
+      return await this.notebookService.create(record);
+    }
+    catch (e) {
+      console.log("Incorrect data format. Usage: YYYY-MM-DD\n");
+      throw new BadRequestException("Incorrect data format. Usage: YYYY-MM-DD\n");
+    }
   }
 
   //Delete record by id
   @Delete(':id')
-  deleteRecord(@Param('id') id: number): Promise<void> {
+  async deleteRecord(@Param('id') id: number): Promise<void> {
     if (this.notebookService.findOne(id) != undefined)
     {
       console.log(id);
       return this.notebookService.remove(id);
     }
-    throw new NotFoundException("Records with ID(" + id + ") not found!\n");
+    throw await new NotFoundException("Records with ID(" + id + ") not found!\n");
   }
 
 }

@@ -7,6 +7,6 @@ export class AppController {
 
   @Get()
   getStarted(): string {
-    return this.appService.AppStart();
+    return this.appService.appStart();
   }
 }
