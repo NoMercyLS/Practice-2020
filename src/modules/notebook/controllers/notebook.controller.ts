@@ -6,7 +6,7 @@ import {
 import { NotebookEntity } from '../entities/notebook.entity';
 import { NotebookService } from '../services/notebook.service';
 import { DateUtils } from 'typeorm/util/DateUtils';
-import { CreateNotebookDto, UpdateNotebookDto } from '../dto/notebook.dto';
+import { NotebookDto, NotebookResponseDto } from '../dto/notebook.dto';
 
 type TSortParams = { [n in keyof Pick<NotebookEntity, 'date' | 'id'>]: 'ASC' | 'DESC' }
 
@@ -17,13 +17,13 @@ export class NotebookController {
 
   // Get all records
   @Get()
-  async getAllRecords(@Query() sort: TSortParams): Promise<CreateNotebookDto[]> {
-    return await this.notebookService.findAll(sort as any)
+  async getAllRecords(@Query() sort: TSortParams): Promise<NotebookResponseDto[]> {
+    return await this.notebookService.findAll(sort)
   }
 
   //Get one record by id
   @Get(':id')
-  async getOneRecord(@Param('id') id: number): Promise<CreateNotebookDto> {
+  async getOneRecord(@Param('id') id: number): Promise<NotebookResponseDto> {
     const record = await this.notebookService.findOne(id);
     if (record == undefined) {
       console.log("404 - Not Found!\n")
@@ -36,8 +36,8 @@ export class NotebookController {
   @Put(':id')
   async updateRecords(
     @Param('id') id: number,
-    @Body() { firstName, lastName, phoneNumber, description, date }: UpdateNotebookDto
-  ) : Promise<NotebookEntity> {
+    @Body() { firstName, lastName, phoneNumber, description, date }: NotebookDto
+  ) : Promise<NotebookDto> {
     const record = await this.notebookService.findOne(id);
     if (record == undefined)
     {
@@ -49,18 +49,16 @@ export class NotebookController {
     record.lastName = lastName;
     record.phoneNumber = phoneNumber;
     record.description = description;
-    console.log("Updated\n");
     return await this.notebookService.update(record);
   }
 
   //Create new record
   @Post()
-  async saveRecord(@Body() record: CreateNotebookDto): Promise<UpdateNotebookDto> {
+  async saveRecord(@Body() record: NotebookDto): Promise<NotebookDto> {
     if (record.date == undefined || record.description == undefined ||
       record.phoneNumber == undefined || record.lastName == undefined ||
       record.firstName == undefined) {
       console.log("ERROR\nOne or more of the fields are undefined");
-      console.log(record);
       throw new BadRequestException("One or more fields are undefined\n");
     }
     record.date = DateUtils.mixedDateToDate(record.date)
@@ -76,12 +74,11 @@ export class NotebookController {
   //Delete record by id
   @Delete(':id')
   async deleteRecord(@Param('id') id: number): Promise<void> {
-    if (this.notebookService.findOne(id) != undefined)
+    if (await this.notebookService.findOne(id) != undefined)
     {
-      console.log(id);
-      return this.notebookService.remove(id);
+      return await this.notebookService.remove(id);
     }
-    throw await new NotFoundException("Records with ID(" + id + ") not found!\n");
+    throw new NotFoundException("Records with ID(" + id + ") not found!\n");
   }
 
 }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotebookEntity } from '../entities/notebook.entity';
 import { DateUtils } from 'typeorm/util/DateUtils';
-import { CreateNotebookDto, UpdateNotebookDto } from '../dto/notebook.dto';
+import { NotebookDto } from '../dto/notebook.dto';
 
 type TSortParams = { [n in keyof Pick<NotebookEntity, 'date' | 'id'>]: 'ASC' | 'DESC' }
 
@@ -15,24 +15,23 @@ export class NotebookService {
   ) {}
 
   async findAll(order: TSortParams): Promise<NotebookEntity[]> {
-    return await this.notebookRepository.find( {order: order} );
+    return this.notebookRepository.find( {order: order} );
   }
 
   async findOne(id: number): Promise<NotebookEntity> {
-    return await this.notebookRepository.findOne({
+    return this.notebookRepository.findOne({
       where: {
         id,
       },
     });
   }
 
-  async create(record: CreateNotebookDto): Promise<NotebookEntity> {
-    delete record.id;
-    return await this.notebookRepository.save(record);
+  async create(record: NotebookDto): Promise<NotebookEntity> {
+    return this.notebookRepository.save(record);
   }
 
-  async update(record: UpdateNotebookDto): Promise<NotebookEntity> {
-    return await this.notebookRepository.save(record);
+  async update(record: NotebookDto): Promise<NotebookEntity> {
+    return this.notebookRepository.save(record);
   }
 
   async remove(id: number): Promise<void> {

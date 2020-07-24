@@ -1,5 +1,4 @@
-export class CreateNotebookDto {
-  id: number;
+export class NotebookDto {
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -7,10 +6,6 @@ export class CreateNotebookDto {
   date: Date;
 }
 
-export  class UpdateNotebookDto {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  description: string;
-  date: Date;
+export class NotebookResponseDto extends NotebookDto {
+  id: number;
 }
