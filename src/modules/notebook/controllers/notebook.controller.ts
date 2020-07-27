@@ -1,6 +1,6 @@
 import {
   BadRequestException, Body, Controller, Delete,
-  Get, NotFoundException, Param,
+  Get, NotFoundException, Param, ParseIntPipe,
   Post, Put, Query,
 } from '@nestjs/common';
 import { NotebookEntity } from '../entities/notebook.entity';
@@ -23,7 +23,7 @@ export class NotebookController {
 
   //Get one record by id
   @Get(':id')
-  async getOneRecord(@Param('id') id: number): Promise<NotebookResponseDto> {
+  async getOneRecord(@Param('id', ParseIntPipe) id: number): Promise<NotebookResponseDto> {
     const record = await this.notebookService.findOne(id);
     if (record == undefined) {
       console.log("404 - Not Found!\n")
@@ -35,7 +35,7 @@ export class NotebookController {
   //Update record by id
   @Put(':id')
   async updateRecords(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() { firstName, lastName, phoneNumber, description, date }: NotebookDto
   ) : Promise<NotebookDto> {
     const record = await this.notebookService.findOne(id);
@@ -44,7 +44,7 @@ export class NotebookController {
       console.log("404 - Not Found!\n")
       throw new NotFoundException("Record with ID(" + id + ") not found!\n");
     }
-    record.date = date;
+    record.date = DateUtils.mixedDateToDate(date);
     record.firstName = firstName;
     record.lastName = lastName;
     record.phoneNumber = phoneNumber;
