@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { NotebookEntity } from '../entities/notebook.entity';
 import { DateUtils } from 'typeorm/util/DateUtils';
-import { NotebookDto} from '../dto/notebook.dto';
+import { NotebookDto, NotebookResponseDto } from '../dto/notebook.dto';
 
 type TSortParams = { [n in keyof Pick<NotebookEntity, 'date' | 'id'>]: 'ASC' | 'DESC' }
 
@@ -35,7 +35,7 @@ export class NotebookService {
     return await this.notebookRepository.update(id, notebookDto);
   }
 
-  async remove(id: number): Promise<void> {
-    await this.notebookRepository.delete(id);
+  async remove(id: number): Promise<DeleteResult> {
+    return await this.notebookRepository.delete(id);
   }
 }
