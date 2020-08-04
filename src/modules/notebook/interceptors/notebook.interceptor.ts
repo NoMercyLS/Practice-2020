@@ -6,10 +6,11 @@ import { tap } from 'rxjs/operators';
 export class ExceptionInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
     return next.handle().pipe(
-      tap ( (value) => {if (!value) {
+      tap((value) => {
+        if (!value) {
         throw new NotFoundException('Record not found! Try another ID')
-      }} )
-
+        }
+      })
     )
   }
 }

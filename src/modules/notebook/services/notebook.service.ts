@@ -36,6 +36,6 @@ export class NotebookService {
   }
 
   async remove(id: number): Promise<DeleteResult> {
-    return await this.notebookRepository.delete(id);
+    return this.notebookRepository.delete(id);
   }
 }

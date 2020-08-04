@@ -1,7 +1,7 @@
 import {
   Body, Controller, Delete,
-  Get, HttpException, NotFoundException, Param, ParseIntPipe,
-  Post, Put, Query, UseFilters, UseInterceptors,
+  Get, Param, ParseIntPipe,
+  Post, Put, Query, UseInterceptors,
 } from '@nestjs/common';
 import { NotebookEntity } from '../entities/notebook.entity';
 import { NotebookService } from '../services/notebook.service';
@@ -27,7 +27,7 @@ export class NotebookController {
     type: [NotebookResponseDto]
   })
   async getAllRecords(@Query() sort: TSortParams): Promise<NotebookResponseDto[]> {
-    return await this.notebookService.findAll(sort)
+    return this.notebookService.findAll(sort)
   }
 
   //Get one record by id
@@ -41,7 +41,7 @@ export class NotebookController {
     type: ExceptionDto
   })
   async getOneRecord(@Param('id', ParseIntPipe) id: number): Promise<NotebookResponseDto> {
-    return await this.notebookService.findOne(id);
+    return this.notebookService.findOne(id);
   }
 
   //Update record by id
@@ -60,7 +60,7 @@ export class NotebookController {
     @Body() notebookDto: NotebookDto
   ) : Promise<NotebookDto> {
     await this.notebookService.update(id, notebookDto);
-    return await this.notebookService.findOne(id);
+    return this.notebookService.findOne(id);
   }
 
   //Create new record
@@ -71,7 +71,7 @@ export class NotebookController {
   })
   @ApiBody({ type: NotebookDto })
   async saveRecord(@Body() record: NotebookDto): Promise<NotebookDto> {
-      return await this.notebookService.create(record);
+      return this.notebookService.create(record);
   }
 
   //Delete record by id
@@ -85,7 +85,7 @@ export class NotebookController {
   })
   async deleteRecord(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
     const result = await this.notebookService.remove(id);
-    return result.affected ? {message: 'Record with ID = ' + id + ' was successfully deleted'} : null;
+    return result.affected ? {message: `Record with ID = ${id} was successfully deleted`} : null;
   }
 
 }
