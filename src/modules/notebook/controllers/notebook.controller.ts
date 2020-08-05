@@ -1,15 +1,19 @@
 import {
-  BadRequestException, Body, Controller, Delete,
-  Get, NotFoundException, Param, ParseIntPipe,
-  Post, Put, Query,
+  Body, Controller, Delete,
+  Get, Param, ParseIntPipe,
+  Post, Put, Query, UseInterceptors,
 } from '@nestjs/common';
 import { NotebookEntity } from '../entities/notebook.entity';
 import { NotebookService } from '../services/notebook.service';
-import { DateUtils } from 'typeorm/util/DateUtils';
 import { NotebookDto, NotebookResponseDto } from '../dto/notebook.dto';
+import { ExceptionInterceptor } from '../interceptors/notebook.interceptor';
+import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ExceptionDto } from '../dto/exception.dto';
 
 type TSortParams = { [n in keyof Pick<NotebookEntity, 'date' | 'id'>]: 'ASC' | 'DESC' }
 
+@ApiTags('records')
+@UseInterceptors(ExceptionInterceptor)
 @Controller('records')
 export class NotebookController {
 
@@ -17,68 +21,71 @@ export class NotebookController {
 
   // Get all records
   @Get()
+  @ApiResponse({
+    status: 200,
+    description: 'Find all records ordered by id or date',
+    type: [NotebookResponseDto]
+  })
   async getAllRecords(@Query() sort: TSortParams): Promise<NotebookResponseDto[]> {
-    return await this.notebookService.findAll(sort)
+    return this.notebookService.findAll(sort)
   }
 
   //Get one record by id
   @Get(':id')
+  @ApiResponse({ status: 200,
+    description: 'Find one record by ID',
+    type: NotebookResponseDto
+  })
+  @ApiResponse({ status: 404,
+    description: 'Record not found! Try another ID',
+    type: ExceptionDto
+  })
   async getOneRecord(@Param('id', ParseIntPipe) id: number): Promise<NotebookResponseDto> {
-    const record = await this.notebookService.findOne(id);
-    if (record == undefined) {
-      console.log("404 - Not Found!\n")
-      throw new NotFoundException("Record with ID(" + id + ") not found!\n");
-    }
-    return record;
+    return this.notebookService.findOne(id);
   }
 
   //Update record by id
   @Put(':id')
+  @ApiResponse({ status: 200,
+    description: 'Update one record by ID',
+    type: NotebookDto
+  })
+  @ApiResponse({ status: 404,
+    description: 'Record not found! Try another ID',
+    type: ExceptionDto
+  })
+  @ApiBody({ type: NotebookDto })
   async updateRecords(
     @Param('id', ParseIntPipe) id: number,
-    @Body() { firstName, lastName, phoneNumber, description, date }: NotebookDto
+    @Body() notebookDto: NotebookDto
   ) : Promise<NotebookDto> {
-    const record = await this.notebookService.findOne(id);
-    if (record == undefined)
-    {
-      console.log("404 - Not Found!\n")
-      throw new NotFoundException("Record with ID(" + id + ") not found!\n");
-    }
-    record.date = DateUtils.mixedDateToDate(date);
-    record.firstName = firstName;
-    record.lastName = lastName;
-    record.phoneNumber = phoneNumber;
-    record.description = description;
-    return await this.notebookService.update(record);
+    await this.notebookService.update(id, notebookDto);
+    return this.notebookService.findOne(id);
   }
 
   //Create new record
   @Post()
+  @ApiResponse({ status: 201,
+    description: 'Create record',
+    type: NotebookDto
+  })
+  @ApiBody({ type: NotebookDto })
   async saveRecord(@Body() record: NotebookDto): Promise<NotebookDto> {
-    if (record.date == undefined || record.description == undefined ||
-      record.phoneNumber == undefined || record.lastName == undefined ||
-      record.firstName == undefined) {
-      console.log("ERROR\nOne or more of the fields are undefined");
-      throw new BadRequestException("One or more fields are undefined\n");
-    }
-    record.date = DateUtils.mixedDateToDate(record.date)
-    try {
-      return await this.notebookService.create(record);
-    }
-    catch (e) {
-      console.log("Incorrect data format. Usage: YYYY-MM-DD\n");
-      throw new BadRequestException("Incorrect data format. Usage: YYYY-MM-DD\n");
-    }
+      return this.notebookService.create(record);
   }
 
   //Delete record by id
   @Delete(':id')
-  async deleteRecord(@Param('id') id: number): Promise<void> {
-    if (await this.notebookService.findOne(id) != undefined)
-    {
-      return await this.notebookService.remove(id);
-    }
-    throw new NotFoundException("Records with ID(" + id + ") not found!\n");
+  @ApiResponse({ status: 200,
+    description: 'Record deleted'
+  })
+  @ApiResponse({ status: 404,
+    description: 'Record not found! Try another ID',
+    type: ExceptionDto
+  })
+  async deleteRecord(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
+    const result = await this.notebookService.remove(id);
+    return result.affected ? {message: `Record with ID = ${id} was successfully deleted`} : null;
   }
 
 }
